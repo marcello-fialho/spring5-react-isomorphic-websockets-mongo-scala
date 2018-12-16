@@ -18,7 +18,7 @@ class ClientMessageDecoder(private val todosService: TodosService) {
     Pattern.compile(".*type[^:]*:[^A-Z]*([A-Z_][A-Z_]*).*")
 
   def handleMessage(message: String): Mono[String] = {
-    def toMonoStr[T] = (mono: Mono[T]) => mono.then(Mono.just(message))
+    def toMonoOfMsg[T] = (mono: Mono[T]) => mono.then(Mono.just(message))
     val objectMapper = new ObjectMapper()
     val matcher = pattern.matcher(message)
     if (matcher.matches()) {
@@ -27,28 +27,28 @@ class ClientMessageDecoder(private val todosService: TodosService) {
         case "ADD_TODO" =>
           val addTodoAction: AddTodo =
             objectMapper.readValue(message, classOf[AddTodo])
-          toMonoStr(todosService
+          toMonoOfMsg(todosService
             .addTodo(Todo(addTodoAction.getId, addTodoAction.getText, completed = false)))
         case "DELETE_TODO" =>
           val deleteTodoAction: DeleteTodo =
             objectMapper.readValue(message, classOf[DeleteTodo])
-          toMonoStr(todosService
+          toMonoOfMsg(todosService
             .deleteTodo(deleteTodoAction.getId))
         case "UPDATE_TODO" =>
           val updateTodoAction: UpdateTodo =
             objectMapper.readValue(message, classOf[UpdateTodo])
-          toMonoStr(todosService
+          toMonoOfMsg(todosService
             .updateTodo(
               updateTodoAction.getTodo.getId,
               updateTodoAction.getTodo))
         case "COMPLETE_ALL_TODOS" =>
-          toMonoStr(todosService.completeAllTodos())
+          toMonoOfMsg(todosService.completeAllTodos())
         case "CLEAR_COMPLETED" =>
-          toMonoStr(todosService.clearCompleted())
+          toMonoOfMsg(todosService.clearCompleted())
         case "SET_VISIBILITY_FILTER" =>
           val setVisibilityFilterAction: SetVisibilityFilter =
             objectMapper.readValue(message, classOf[SetVisibilityFilter])
-          toMonoStr(todosService
+          toMonoOfMsg(todosService
             .setVisibilityFilter(setVisibilityFilterAction.getFilter))
       } catch {
         case _: IOException => {
