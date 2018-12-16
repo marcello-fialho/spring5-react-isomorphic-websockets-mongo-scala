@@ -20,7 +20,7 @@ class TodosServiceImpl(private val visibilityFilterRepository: VisibilityFilterR
       acc
     }
 
-  private val findAndProcessAll: BiFunction[TodoRepository, Function[util.List[Todo], Mono[Void]], Mono[Void]] = (repository, func) =>
+  private val findAndProcessAll: (TodoRepository, Function[util.List[Todo], Mono[Void]]) => Mono[Void] = (repository, func) =>
     repository.findAll().reduce(new util.ArrayList[Todo](), reducer).flatMap(func).then()
 
   override def setVisibilityFilter(visibilityFilter: String): Mono[VisibilityFilter] =
@@ -43,7 +43,7 @@ class TodosServiceImpl(private val visibilityFilterRepository: VisibilityFilterR
               .flatMap(todo => todoRepository.save(todo)))
           .then()
       }
-    try findAndProcessAll.apply(todoRepository, completeAll)
+    try findAndProcessAll(todoRepository, completeAll)
     catch {
       case _: Exception => Mono.empty()
 
@@ -62,7 +62,7 @@ class TodosServiceImpl(private val visibilityFilterRepository: VisibilityFilterR
               .flatMap(todo => todoRepository.save(todo)))
           .then()
       }
-    try findAndProcessAll.apply(todoRepository, clearCompleted)
+    try findAndProcessAll(todoRepository, clearCompleted)
     catch {
       case _: Exception => Mono.empty()
     }
